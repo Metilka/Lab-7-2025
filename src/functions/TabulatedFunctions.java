@@ -1,38 +1,42 @@
 package functions;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.reflect.Constructor;
+
 public final class TabulatedFunctions {
 
-        private static TabulatedFunctionFactory factory = new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory();
+    private static TabulatedFunctionFactory factory = new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory();
 
     public static void setTabulatedFunctionFactory(TabulatedFunctionFactory newFactory) {
         if (newFactory == null)
             throw new IllegalArgumentException("Фабрика не должна быть null");
         factory = newFactory;
     }
-        // перегруженные методы создания функции
-        public static TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
-            return factory.createTabulatedFunction(leftX, rightX, pointsCount);
+
+    // перегруженные методы создания функции
+    public static TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+        return factory.createTabulatedFunction(leftX, rightX, pointsCount);
     }
+
     public static TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
         return factory.createTabulatedFunction(leftX, rightX, values);
-}
+    }
 
 
     public static TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
         return factory.createTabulatedFunction(points);
     }
 
-public static TabulatedFunction createTabulatedFunction(
+    public static TabulatedFunction createTabulatedFunction(
             Class<? extends TabulatedFunction> functionClass,
             double leftX, double rightX, int pointsCount) {
 
         try {
             // Ищем конструктор с параметрами (double, double, int)
             Constructor<? extends TabulatedFunction> constructor =
-                functionClass.getConstructor(double.class, double.class, int.class);
+                    functionClass.getConstructor(double.class, double.class, int.class);
             // Создаем объект с помощью найденного конструктора
             return constructor.newInstance(leftX, rightX, pointsCount);
         } catch (Exception e) {
@@ -49,7 +53,7 @@ public static TabulatedFunction createTabulatedFunction(
         try {
             // Ищем конструктор с параметрами (double, double, double[])
             Constructor<? extends TabulatedFunction> constructor =
-                functionClass.getConstructor(double.class, double.class, double[].class);
+                    functionClass.getConstructor(double.class, double.class, double[].class);
             // Создаем объект с помощью найденного конструктора
             return constructor.newInstance(leftX, rightX, values);
         } catch (Exception e) {
@@ -65,7 +69,7 @@ public static TabulatedFunction createTabulatedFunction(
         try {
             // Ищем конструктор с параметрами (FunctionPoint[])
             Constructor<? extends TabulatedFunction> constructor =
-                functionClass.getConstructor(FunctionPoint[].class);
+                    functionClass.getConstructor(FunctionPoint[].class);
             // Создаем объект с помощью найденного конструктора
             return constructor.newInstance((Object) points);
         } catch (Exception e) {
@@ -92,7 +96,8 @@ public static TabulatedFunction createTabulatedFunction(
         for (int i = 0; i < pointsCount; ++i) {
             double x = leftX + i * step;
             double y = function.getFunctionValue(x);
-            pts[i] = new FunctionPoint(x, y);}
+            pts[i] = new FunctionPoint(x, y);
+        }
         return createTabulatedFunction(functionClass, pts); // Создаем табулированную функцию через рефлексию
     }
 
@@ -103,29 +108,43 @@ public static TabulatedFunction createTabulatedFunction(
 
     // Сравнения с эпсилоном
     private static final double EPSILON = 1e-9;
-    private static boolean le(double a, double b){ return a <= b + EPSILON; }
-    private static boolean ge(double a, double b){ return a >= b - EPSILON; }
+
+    private static boolean le(double a, double b) {
+        return a <= b + EPSILON;
+    }
+
+    private static boolean ge(double a, double b) {
+        return a >= b - EPSILON;
+    }
 
     // Табуляция функции на отрезке
     public static TabulatedFunction tabulate(Function function, double leftX, double rightX, int pointsCount) {
-        if (function == null) {throw new IllegalArgumentException("function is null");}
-        if (pointsCount < 2) {throw new IllegalArgumentException("pointsCount must be >= 2");}
-        if (!(leftX < rightX)) {throw new IllegalArgumentException("leftX must be < rightX");}
+        if (function == null) {
+            throw new IllegalArgumentException("function is null");
+        }
+        if (pointsCount < 2) {
+            throw new IllegalArgumentException("pointsCount must be >= 2");
+        }
+        if (!(leftX < rightX)) {
+            throw new IllegalArgumentException("leftX must be < rightX");
+        }
         // Проверяем, что отрезок внутри области определения функции
         if (!ge(leftX, function.getLeftDomainBorder()) ||
-            !le(rightX, function.getRightDomainBorder())) {
-            throw new IllegalArgumentException("Tabulation segment lies outside function domain");}
+                !le(rightX, function.getRightDomainBorder())) {
+            throw new IllegalArgumentException("Tabulation segment lies outside function domain");
+        }
 
         double step = (rightX - leftX) / (pointsCount - 1);
         FunctionPoint[] pts = new FunctionPoint[pointsCount];
         for (int i = 0; i < pointsCount; ++i) {
             double x = leftX + i * step;
             double y = function.getFunctionValue(x);
-            pts[i] = new FunctionPoint(x, y);}
-       return createTabulatedFunction(pts); // теперь метод использует фабрику
+            pts[i] = new FunctionPoint(x, y);
+        }
+        return createTabulatedFunction(pts); // теперь метод использует фабрику
     }
 
-     // Бинарный вывод пишет N, затем пары (x, y) для всех точек
+    // Бинарный вывод пишет N, затем пары (x, y) для всех точек
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) {
         try {
             DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(out));
@@ -143,7 +162,7 @@ public static TabulatedFunction createTabulatedFunction(
     }
 
 
-     // Бинарный ввод читает N, затем N пар (x, y), собирает TabulatedFunction
+    // Бинарный ввод читает N, затем N пар (x, y), собирает TabulatedFunction
     public static TabulatedFunction inputTabulatedFunction(InputStream in) {
         try {
             // Оборачиваем поток для удобного чтения
@@ -155,8 +174,28 @@ public static TabulatedFunction createTabulatedFunction(
                 double y = dis.readDouble();
                 pts[i] = new FunctionPoint(x, y);
             }
-             // Теперь используем фабрику
+            // Теперь используем фабрику
             return createTabulatedFunction(pts);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // Бинарный ввод с указанием класса табулированной функции Реализованный через рефлексию
+    public static TabulatedFunction inputTabulatedFunction(
+            Class<? extends TabulatedFunction> functionClass,
+            InputStream in) {
+        try {
+            DataInputStream dis = new DataInputStream(new BufferedInputStream(in));
+            int n = dis.readInt();
+            FunctionPoint[] pts = new FunctionPoint[n];
+            for (int i = 0; i < n; ++i) {
+                double x = dis.readDouble();
+                double y = dis.readDouble();
+                pts[i] = new FunctionPoint(x, y);
+            }
+            // Здесь используем рефлексивный createTabulatedFunction
+            return createTabulatedFunction(functionClass, pts);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -184,21 +223,55 @@ public static TabulatedFunction createTabulatedFunction(
             StreamTokenizer st = new StreamTokenizer(in);
             st.parseNumbers(); // включаем поддержку чисел
             int t = st.nextToken();
-            if (t != StreamTokenizer.TT_NUMBER) {throw new IOException("Expected points count");}
+            if (t != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("Expected points count");
+            }
             int n = (int) st.nval; // Считываем количество точек
             List<FunctionPoint> list = new ArrayList<>(n);
             for (int i = 0; i < n; ++i) {
-                if (st.nextToken() != StreamTokenizer.TT_NUMBER) { throw new IOException("Expected x");}
+                if (st.nextToken() != StreamTokenizer.TT_NUMBER) {
+                    throw new IOException("Expected x");
+                }
                 double x = st.nval;
-                if (st.nextToken() != StreamTokenizer.TT_NUMBER) {throw new IOException("Expected y");}
+                if (st.nextToken() != StreamTokenizer.TT_NUMBER) {
+                    throw new IOException("Expected y");
+                }
                 double y = st.nval;
                 list.add(new FunctionPoint(x, y));
             }
-                // Собираем функцию из считанных точек
+            // Собираем функцию из считанных точек
             FunctionPoint[] pts = list.toArray(new FunctionPoint[0]);
             return createTabulatedFunction(pts); // используем фабрику
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+    // Ввод табулированной функции из символьного потока с указанием класса Реализованный через рефлексию
+    public static TabulatedFunction readTabulatedFunction(
+            Class<? extends TabulatedFunction> functionClass,
+            Reader in) {
+        try {
+            StreamTokenizer st = new StreamTokenizer(in);
+            st.parseNumbers();
+            int t = st.nextToken();
+            if (t != StreamTokenizer.TT_NUMBER)
+                throw new IOException("Expected points count");
+            int n = (int) st.nval; // Считываем количество точек
+            List<FunctionPoint> list = new ArrayList<>(n);
+            for (int i = 0; i < n; ++i) {
+                if (st.nextToken() != StreamTokenizer.TT_NUMBER)
+                    throw new IOException("Expected x");
+                double x = st.nval;
+                if (st.nextToken() != StreamTokenizer.TT_NUMBER)
+                    throw new IOException("Expected y");
+                double y = st.nval;
+                list.add(new FunctionPoint(x, y));}
+            FunctionPoint[] pts = list.toArray(new FunctionPoint[0]); // Собираем функцию из считанных точек
+            return createTabulatedFunction(functionClass, pts); // Создаём объект нужного класса через рефлексию
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
 }
